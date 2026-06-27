@@ -137,24 +137,24 @@ const sidebarMenus = [
       { name: 'ตั๋วสัญญาใช้เงิน', to: '/procurement/promissory-notes' }
     ]
   },
-  {
-    name: 'การเงิน',
-    icon: '›',
-    children: [
-      { name: 'การเงินหลัก', to: '/finance' },
-      { name: 'ทุนเรือนหุ้น', to: '/finance/share-capital' },
-      { name: 'ปรับเปลี่ยนหุ้นรายเดือน', to: '/finance/monthly-shares' }
-    ]
-  },
-  {
-    name: 'ตั้งค่า',
-    icon: '›',
-    children: [
-      { name: 'ตั้งค่าระบบ', to: '/settings/system' },
-      { name: 'ตั้งค่าผู้ใช้งาน', to: '/settings/users' },
-      { name: 'ประวัติการทำงาน', to: '/settings/logs' }
-    ]
-  }
+  // {
+  //   name: 'การเงิน',
+  //   icon: '›',
+  //   children: [
+  //     { name: 'การเงินหลัก', to: '/finance' },
+  //     { name: 'ทุนเรือนหุ้น', to: '/finance/share-capital' },
+  //     { name: 'ปรับเปลี่ยนหุ้นรายเดือน', to: '/finance/monthly-shares' }
+  //   ]
+  // },
+  // {
+  //   name: 'ตั้งค่า',
+  //   icon: '›',
+  //   children: [
+  //     { name: 'ตั้งค่าระบบ', to: '/settings/system' },
+  //     { name: 'ตั้งค่าผู้ใช้งาน', to: '/settings/users' },
+  //     { name: 'ประวัติการทำงาน', to: '/settings/logs' }
+  //   ]
+  // }
 ]
 
 // Categories expansion states (Only one category can be open at a time)

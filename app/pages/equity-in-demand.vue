@@ -515,8 +515,10 @@
               <input
                 type="text"
                 v-model="formState.fixedDate"
-                placeholder="29/05/2026 15:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
             <div class="space-y-1.5">
@@ -526,8 +528,10 @@
               <input
                 type="text"
                 v-model="formState.passedDate"
-                placeholder="30/05/2026 09:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
           </div>

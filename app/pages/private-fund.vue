@@ -568,8 +568,10 @@
               <input
                 type="text"
                 v-model="formState.fixedDate"
-                placeholder="29/05/2026 15:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
             <div class="space-y-1.5">
@@ -579,8 +581,10 @@
               <input
                 type="text"
                 v-model="formState.passedDate"
-                placeholder="30/05/2026 09:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
           </div>
@@ -911,14 +915,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import Swal from "sweetalert2";
+import { useBugs } from "~/composables/useBugs";
 
-const isLoading = ref(true);
+const { bugsList, isLoading, fetchBugs, addBug, updateBug, deleteBug } =
+  useBugs("รายงาน");
 
-// SweetAlert Toast definition
 let Toast = null;
 onMounted(() => {
+  fetchBugs();
   Toast = Swal.mixin({
     toast: true,
     position: "top-end",
@@ -933,38 +939,37 @@ onMounted(() => {
       toast.addEventListener("mouseleave", Swal.resumeTimer);
     },
   });
-
-  // Simulated content loading sequence
-  setTimeout(() => {
-    isLoading.value = false;
-  }, 600);
 });
 
 const triggerToast = (icon, title) => {
-  if (Toast) {
-    Toast.fire({ icon, title });
-  }
+  if (Toast) Toast.fire({ icon, title });
+};
+
+const isProcessing = ref(false);
+const processingMessage = ref("กำลังประมวลผล...");
+const showLoadingPopup = (t = "กำลังประมวลผล...") => {
+  processingMessage.value = t;
+  isProcessing.value = true;
+};
+const closeLoadingPopup = () => {
+  isProcessing.value = false;
 };
 
 const filterDropdownOpen = ref(false);
 const formStatusDropdownOpen = ref(false);
-
 const closeAllDropdowns = (e) => {
   if (!e.target.closest(".custom-select-container")) {
     filterDropdownOpen.value = false;
     formStatusDropdownOpen.value = false;
   }
 };
-
 onMounted(() => {
   document.addEventListener("click", closeAllDropdowns);
 });
-
 onUnmounted(() => {
   document.removeEventListener("click", closeAllDropdowns);
 });
 
-// Summary statistics for custom module
 const bugSummaryStats = computed(() => {
   const total = bugsList.value.length;
   const pass = bugsList.value.filter((b) => b.status === "Pass").length;
@@ -972,7 +977,6 @@ const bugSummaryStats = computed(() => {
   const demoFail = bugsList.value.filter(
     (b) => b.status === "Demo Fail",
   ).length;
-
   return [
     {
       label: "บั๊กทั้งหมด (Total)",
@@ -1001,76 +1005,82 @@ const bugSummaryStats = computed(() => {
   ];
 });
 
-// Raw custom module bug lists
-const bugsList = ref([
-  {
-    id: 1,
-    bugId: "UBI-${code}1",
-    title: "ข้อผิดพลาดเลย์เอาต์ดีไซน์บนหน้า ${title}",
-    comments: [
-      "ดีไซน์ส่วนหัวข้อความจืดชืดไม่สอดคล้องกับ Figma",
-      "ระยะห่างปุ่มกดแคบเกินไปทำให้กดลำบากบนมือถือ",
-      "ต้องการปรับฟอนต์ให้ใช้เป็นสไตล์แบบไม่มีหัวหัวกลมมน",
-    ],
-    expectation: "แก้ไขดีไซน์และฟอนต์ตามมาตรฐาน Figma",
-    driveLink: "",
-    figmaLink: "https://figma.com",
-    status: "Defect",
-    createdDate: "26/06/2569 11:15",
-    fixedDate: "",
-    passedDate: "",
-  },
-  {
-    id: 2,
-    bugId: "UBI-${code}2",
-    title: "ระบบการคำนวณและกรองข้อมูลหน้า ${title}",
-    comments: [
-      "ไม่มีตัวกรองช่วงเวลาในรายงานหลัก",
-      "การจัดเรียงหัวข้อตามรหัสหลักไม่ทำงาน",
-    ],
-    expectation: "ตัวกรองทำงานได้ครบถ้วนและแม่นยำ",
-    driveLink: "https://drive.google.com",
-    figmaLink: "",
-    status: "Ready For Demo",
-    createdDate: "27/06/2569 15:40",
-    fixedDate: "27/06/2569 18:20",
-    passedDate: "",
-  },
-]);
-
 const searchQuery = ref("");
 const statusFilter = ref("");
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+watch([searchQuery, statusFilter], () => {
+  currentPage.value = 1;
+});
 
 const filteredBugs = computed(() => {
   return bugsList.value.filter((item) => {
-    // Search filter
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       item.bugId.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       item.comments.some((c) =>
         c.toLowerCase().includes(searchQuery.value.toLowerCase()),
       );
-
-    // Status filter
     let matchesStatus = true;
-    if (statusFilter.value) {
-      matchesStatus = item.status === statusFilter.value;
-    }
-
+    if (statusFilter.value) matchesStatus = item.status === statusFilter.value;
     return matchesSearch && matchesStatus;
   });
 });
 
-// Modal states
+const totalPages = computed(() => {
+  return Math.ceil(filteredBugs.value.length / itemsPerPage.value) || 1;
+});
+const paginatedBugs = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  return filteredBugs.value.slice(start, start + itemsPerPage.value);
+});
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+const goToPage = (page) => {
+  currentPage.value = page;
+};
+
+const visiblePages = computed(() => {
+  const total = totalPages.value,
+    current = currentPage.value,
+    delta = 1;
+  const range = [],
+    rangeWithDots = [];
+  let l;
+  for (let i = 1; i <= total; i++) {
+    if (
+      i === 1 ||
+      i === total ||
+      (i >= current - delta && i <= current + delta)
+    )
+      range.push(i);
+  }
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) rangeWithDots.push(l + 1);
+      else if (i - l !== 1) rangeWithDots.push("...");
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+  return rangeWithDots;
+});
+
 const showFormModal = ref(false);
 const showViewModal = ref(false);
 const showDeleteModal = ref(false);
-const formType = ref("add"); // 'add' or 'edit'
+const formType = ref("add");
 const selectedBug = ref(null);
 const bugToDelete = ref(null);
 
 const formState = ref({
   id: null,
+  sheetRowIndex: null,
   bugId: "",
   title: "",
   comments: [],
@@ -1082,15 +1092,28 @@ const formState = ref({
   fixedDate: "",
   passedDate: "",
 });
-
 const formCommentsRaw = ref("");
+
+const generateNextBugId = () => {
+  if (bugsList.value.length === 0) return "UBIV1";
+  let maxNum = 0;
+  bugsList.value.forEach((bug) => {
+    const match = bug.bugId.match(/^UBIV(\d+)$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  return `UBIV${maxNum + 1}`;
+};
 
 const openAddModal = () => {
   formType.value = "add";
   formCommentsRaw.value = "";
   formState.value = {
     id: null,
-    bugId: "",
+    sheetRowIndex: null,
+    bugId: generateNextBugId(),
     title: "",
     comments: [],
     expectation: "",
@@ -1106,7 +1129,7 @@ const openAddModal = () => {
 
 const openEditModal = (item) => {
   formType.value = "edit";
-  formCommentsRaw.value = item.comments.join("\\n");
+  formCommentsRaw.value = item.comments.join("\n");
   formState.value = { ...item };
   showFormModal.value = true;
 };
@@ -1115,68 +1138,89 @@ const openViewModal = (item) => {
   selectedBug.value = item;
   showViewModal.value = true;
 };
-
 const closeFormModal = () => {
   showFormModal.value = false;
 };
-
 const closeViewModal = () => {
   showViewModal.value = false;
 };
 
-const saveBug = () => {
-  if (
-    !formState.value.bugId ||
-    !formState.value.title ||
-    !formCommentsRaw.value
-  ) {
+const saveBug = async () => {
+  if (!formState.value.bugId || !formCommentsRaw.value) {
     triggerToast("error", "กรุณากรอกฟิลด์ที่จำเป็น (*) ให้ครบถ้วน");
     return;
   }
-
-  // Parse comments
   formState.value.comments = formCommentsRaw.value
-    .split("\\n")
+    .split("\n")
     .map((c) => c.trim())
     .filter((c) => c.length > 0);
+  closeFormModal();
 
   if (formType.value === "add") {
-    const newId = bugsList.value.length
-      ? Math.max(...bugsList.value.map((b) => b.id)) + 1
-      : 1;
-    bugsList.value.push({
-      ...formState.value,
-      id: newId,
+    showLoadingPopup("กำลังบันทึกข้อมูลบั๊กใหม่...");
+    const success = await addBug({
+      bugId: formState.value.bugId,
+      title: formState.value.title,
+      comments: formState.value.comments,
+      expectation: formState.value.expectation,
+      driveLink: formState.value.driveLink,
+      figmaLink: formState.value.figmaLink,
+      status: formState.value.status,
+      createdDate: formState.value.createdDate,
+      fixedDate: formState.value.fixedDate,
+      passedDate: formState.value.passedDate,
     });
-    triggerToast("success", "เพิ่มบันทึกบั๊กสำเร็จแล้ว");
+    closeLoadingPopup();
+    triggerToast(
+      success ? "success" : "error",
+      success ? "เพิ่มบันทึกบั๊กสำเร็จแล้ว" : "ไม่สามารถเพิ่มข้อมูลได้",
+    );
   } else {
-    const index = bugsList.value.findIndex((b) => b.id === formState.value.id);
-    if (index !== -1) {
-      bugsList.value[index] = { ...formState.value };
-      triggerToast("success", "แก้ไขข้อมูลบั๊กสำเร็จแล้ว");
-    }
+    showLoadingPopup("กำลังอัปเดตข้อมูลบั๊ก...");
+    const success = await updateBug(formState.value);
+    closeLoadingPopup();
+    triggerToast(
+      success ? "success" : "error",
+      success ? "แก้ไขข้อมูลบั๊กสำเร็จแล้ว" : "ไม่สามารถอัปเดตข้อมูลได้",
+    );
   }
-  closeFormModal();
 };
 
 const confirmDelete = (item) => {
   bugToDelete.value = item;
   showDeleteModal.value = true;
 };
-
 const closeDeleteModal = () => {
   showDeleteModal.value = false;
   bugToDelete.value = null;
 };
 
-const executeDelete = () => {
+const executeDelete = async () => {
+  console.log("executeDelete triggered for:", bugToDelete.value);
   if (bugToDelete.value) {
-    bugsList.value = bugsList.value.filter(
-      (b) => b.id !== bugToDelete.value.id,
-    );
-    triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว");
+    const targetRowIndex = bugToDelete.value.sheetRowIndex;
+    console.log("sheetRowIndex is:", targetRowIndex);
+    closeDeleteModal();
+    showLoadingPopup("กำลังลบข้อมูลบั๊ก...");
+    try {
+      const success = await deleteBug(targetRowIndex);
+      console.log("deleteBug response success:", success);
+      closeLoadingPopup();
+      if (success) {
+        triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว");
+        if (paginatedBugs.value.length === 0 && currentPage.value > 1)
+          currentPage.value--;
+      } else {
+        triggerToast("error", "ไม่สามารถลบข้อมูลได้");
+      }
+    } catch (err) {
+      console.error("Error in executeDelete:", err);
+      closeLoadingPopup();
+      triggerToast("error", "เกิดข้อผิดพลาดขณะลบข้อมูล");
+    }
+  } else {
+    console.warn("bugToDelete.value is null");
   }
-  closeDeleteModal();
 };
 
 const statusClass = (status) => {
