@@ -437,13 +437,13 @@
         <div class="flex justify-end space-x-3 px-6 py-4.5 border-t border-slate-100 bg-slate-50/50 shrink-0">
           <button 
             @click="closeFormModal" 
-            class="bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-300 active:scale-95 px-6 py-2.5 rounded-full text-xs font-bold text-slate-600 transition-all select-none shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
+            class="bg-white border border-slate-200 hover:bg-slate-100 hover:border-slate-350 active:scale-95 px-6 py-2.5 rounded-full text-xs font-bold text-slate-600 transition-all select-none shadow-[0_2px_6px_rgba(0,0,0,0.02)]"
           >
             ยกเลิก
           </button>
           <button 
             @click="saveBug" 
-            class="bg-gradient-to-r from-indigo-650 to-indigo-550 hover:opacity-95 active:scale-95 px-7 py-2.5 rounded-full text-white text-xs font-extrabold shadow-[0_4px_14_rgba(99,102,241,0.2)] transition-all select-none"
+            class="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:opacity-95 active:scale-95 px-7 py-2.5 rounded-full text-white text-xs font-extrabold shadow-[0_4px_14_rgba(99,102,241,0.2)] transition-all select-none"
           >
             บันทึกข้อมูล
           </button>
@@ -683,7 +683,7 @@ const bugSummaryStats = computed(() => {
   const demoFail = bugsList.value.filter(b => b.status === 'Demo Fail').length
   
   return [
-    { label: 'บั๊กทั้งหมด (Total)', value: `	h${total} รายการ`, icon: '📊', gradient: 'from-sky-400 to-indigo-500' },
+    { label: 'บั๊กทั้งหมด (Total)', value: `${total} รายการ`, icon: '📊', gradient: 'from-sky-400 to-indigo-500' },
     { label: 'ผ่านการทดสอบ (Pass)', value: `${pass} รายการ`, icon: '🟢', gradient: 'from-emerald-400 to-teal-500' },
     { label: 'รอแก้ไข (Defect)', value: `${defect} รายการ`, icon: '🔴', gradient: 'from-rose-400 to-red-500' },
     { label: 'ไม่ผ่าน (Demo Fail)', value: `${demoFail} รายการ`, icon: '🟠', gradient: 'from-amber-400 to-orange-500' }

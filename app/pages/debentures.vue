@@ -439,7 +439,7 @@
           </button>
           <button 
             @click="saveBug" 
-            class="bg-gradient-to-r from-indigo-650 to-indigo-550 hover:opacity-95 active:scale-95 px-7 py-2.5 rounded-full text-white text-xs font-extrabold shadow-[0_4px_14_rgba(99,102,241,0.2)] transition-all select-none"
+            class="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:opacity-95 active:scale-95 px-7 py-2.5 rounded-full text-white text-xs font-extrabold shadow-[0_4px_14_rgba(99,102,241,0.2)] transition-all select-none"
           >
             บันทึกข้อมูล
           </button>
