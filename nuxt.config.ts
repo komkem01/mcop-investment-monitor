@@ -7,7 +7,13 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
-  
+  app: {
+    baseURL: process.env.NUXT_PUBLIC_BASE_URL,
+    head: {
+      title: 'MCOP INVESTMENT MONITOR'
+    }
+  },
+
   // 2. ระบุไฟล์ CSS หลักที่จะให้ Nuxt โหลดใช้งาน
   css: ['~/assets/main.css'],
 })
