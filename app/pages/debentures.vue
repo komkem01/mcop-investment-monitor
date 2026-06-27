@@ -391,7 +391,7 @@
             </div>
             <div class="space-y-1.5">
               <label class="font-bold text-slate-500 tracking-wider"
-                >รายละเอียดหัวข้อ *</label
+                >รายละเอียดหัวข้อ(เส้นทาง) *</label
               >
               <input
                 type="text"
