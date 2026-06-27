@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "patch": "python3 patch_all_pages.py",
+    "patch-js": "node patch.cjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",

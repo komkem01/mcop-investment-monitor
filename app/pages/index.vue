@@ -30,27 +30,80 @@
           </button>
         </div>
 
-        <!-- Stats summary cards -->
-        <StatsGrid :stats="globalStats" />
+        <!-- Loading Spinner (Same as other pages) -->
+        <div
+          v-if="isLoading"
+          class="flex flex-col items-center justify-center py-40 space-y-6"
+        >
+          <div class="relative flex items-center justify-center">
+            <div
+              class="w-16 h-16 rounded-full border-2 border-indigo-500/10 border-t-indigo-500 animate-spin shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+            ></div>
+            <div
+              class="absolute w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 animate-pulse shadow-[0_0_20px_rgba(99,102,241,0.5)] opacity-80"
+            ></div>
+          </div>
+          <div class="flex flex-col items-center space-y-1">
+            <span
+              class="text-xs font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-slate-600 via-indigo-500 to-sky-500 uppercase animate-pulse"
+            >
+              Loading Data
+            </span>
+            <span class="text-[9px] font-bold text-slate-400/80 tracking-wider"
+              >กำลังดึงข้อมูลจากระบบหลัก...</span
+            >
+          </div>
+        </div>
 
-        <!-- Double columns section -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ModuleChart :modules="moduleStats" />
-          <SystemCompleteness :modules="moduleStats" />
-        </section>
+        <template v-else>
+          <!-- Stats summary cards -->
+          <StatsGrid :stats="globalStats" />
 
-        <!-- Module Status grids -->
-        <ModuleStatusGrid
-          :modules="filteredModuleStats"
-          @select-module="handleSelectModule"
-        />
+          <!-- Double columns section -->
+          <section class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <ModuleChart :modules="moduleStats" />
+            <SystemCompleteness :modules="moduleStats" />
+          </section>
+
+          <!-- Module Status grids -->
+          <ModuleStatusGrid
+            :modules="filteredModuleStats"
+            @select-module="handleSelectModule"
+          />
+        </template>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+
+const isLoading = ref(true)
+const rawGlobalStats = ref({ pass: 0, defect: 0, demoFail: 0, doing: 0 })
+const rawModulesList = ref([])
+
+const fetchDashboardStats = async () => {
+  try {
+    isLoading.value = true
+    const config = useRuntimeConfig()
+    const API_URL = `${config.public.apiBase.replace(/\/data$/, '')}/dashboard/stats`
+    
+    const data = await $fetch(API_URL)
+    if (data) {
+      if (data.global) rawGlobalStats.value = data.global
+      if (data.modules) rawModulesList.value = data.modules
+    }
+  } catch (e) {
+    console.error("Failed to load dashboard stats:", e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchDashboardStats()
+})
 
 // Sidebar Menu items
 const sidebarMenus = ref([
@@ -70,28 +123,61 @@ const sidebarMenus = ref([
 ])
 
 // Global Statistics summary numbers
-const globalStats = ref([
-  { label: 'สำเร็จ (Pass)', value: '127', icon: '🟢', color: 'text-green-600' },
-  { label: 'รอแก้ไข (Defect)', value: '57', icon: '🔴', color: 'text-red-600' },
-  { label: 'ไม่ผ่าน (Demo Fail)', value: '8', icon: '🟠', color: 'text-orange-600' },
-  { label: 'กำลังดำเนินการ (Doing)', value: '0', icon: '🔵', color: 'text-blue-600' }
+const globalStats = computed(() => [
+  { label: 'สำเร็จ (Pass)', value: String(rawGlobalStats.value.pass), icon: '🟢', color: 'text-green-600' },
+  { label: 'รอแก้ไข (Defect)', value: String(rawGlobalStats.value.defect), icon: '🔴', color: 'text-red-600' },
+  { label: 'ไม่ผ่าน (Demo Fail)', value: String(rawGlobalStats.value.demoFail), icon: '🟠', color: 'text-orange-600' },
+  { label: 'กำลังดำเนินการ (Doing)', value: String(rawGlobalStats.value.doing), icon: '🔵', color: 'text-blue-600' }
 ])
 
 // Raw Module Statistics data
-const moduleStats = ref([
-  { name: 'หุ้นกู้', icon: '📈', defect: 21, demoFail: 3, pass: 59 },
-  { name: 'พันธบัตร', icon: '📜', defect: 17, demoFail: 0, pass: 16 },
-  { name: 'ตั้งค่า', icon: '⚙️', defect: 10, demoFail: 4, pass: 29 },
-  { name: 'รายงาน', icon: '📑', defect: 10, demoFail: 0, pass: 0 },
-  { name: 'อยู่ในความต้องการ', icon: '📊', defect: 3, demoFail: 0, pass: 12 },
-  { name: 'ไม่อยู่ในความต้องการ', icon: '📉', defect: 1, demoFail: 0, pass: 6 },
-  { name: 'เงินฝาก', icon: '💰', defect: 0, demoFail: 4, pass: 1 },
-  { name: 'ตั๋วสัญญาเงิน', icon: '📝', defect: 2, demoFail: 1, pass: 4 },
-  { name: 'ทุนเรือนหุ้น', icon: '🏢', defect: 1, demoFail: 0, pass: 0 },
-  { name: 'ปรับเปลี่ยนหุ้นรายเดือน', icon: '🔄', defect: 1, demoFail: 0, pass: 1 },
-  { name: 'จัดหาเงิน', icon: '🤝', defect: 3, demoFail: 0, pass: 0 },
-  { name: 'การเงิน', icon: '💵', defect: 2, demoFail: 0, pass: 0 }
-])
+const moduleStats = computed(() => {
+  const nameMapping = {
+    "คำร้องขอปรับเปลี่ยนหุ้นรายเดือน": "ปรับเปลี่ยนหุ้นรายเดือน",
+    "ตั๋วสัญญาใช้เงิน": "ตั๋วสัญญาเงิน"
+  }
+  const iconsMapping = {
+    "หน้าแดชบอร์ด": "📊",
+    "หุ้นกู้": "📈",
+    "พันธบัตร": "📜",
+    "ไม่อยู่ในความต้องการ": "📉",
+    "อยู่ในความต้องการ": "📊",
+    "ทุนเรือนหุ้น": "🏢",
+    "ปรับเปลี่ยนหุ้นรายเดือน": "🔄",
+    "เงินฝาก": "💰",
+    "ตั๋วสัญญาเงิน": "📝",
+    "จัดหาเงิน": "🤝",
+    "การเงิน": "💵",
+    "รายงาน": "📑",
+    "ตั้งค่า": "⚙️"
+  }
+
+  const sidebarOrder = [
+    'หุ้นกู้', 'พันธบัตร', 'ตั้งค่า', 'รายงาน', 'อยู่ในความต้องการ', 
+    'ไม่อยู่ในความต้องการ', 'เงินฝาก', 'ตั๋วสัญญาเงิน', 'ทุนเรือนหุ้น', 
+    'ปรับเปลี่ยนหุ้นรายเดือน', 'จัดหาเงิน', 'การเงิน'
+  ]
+
+  const mapped = rawModulesList.value.map(m => {
+    const displayName = nameMapping[m.name] || m.name
+    return {
+      name: displayName,
+      icon: iconsMapping[displayName] || '›',
+      defect: m.defect,
+      demoFail: m.demoFail,
+      pass: m.pass,
+      doing: m.doing
+    }
+  }).filter(m => m.name !== 'หน้าแดชบอร์ด')
+
+  mapped.sort((a, b) => {
+    const idxA = sidebarOrder.indexOf(a.name)
+    const idxB = sidebarOrder.indexOf(b.name)
+    return (idxA !== -1 ? idxA : 999) - (idxB !== -1 ? idxB : 999)
+  })
+
+  return mapped
+})
 
 // Search state
 const searchQuery = ref('')

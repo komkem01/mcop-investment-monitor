@@ -212,7 +212,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200">
                   <tr
-                    v-for="item in filteredBugs"
+                    v-for="item in paginatedBugs"
                     :key="item.id"
                     class="text-xs transition-all hover:bg-slate-50/70 border-b border-slate-100 group"
                   >
@@ -325,7 +325,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr v-if="filteredBugs.length === 0">
+                  <tr v-if="paginatedBugs.length === 0">
                     <td
                       colspan="11"
                       class="py-8 text-center text-slate-400 font-medium"
@@ -336,10 +336,45 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination Bar -->
+            <div
+              class="flex items-center justify-between mt-4 px-2"
+              v-if="filteredBugs.length > 0"
+            >
+              <div class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">
+                แสดง {{ (currentPage - 1) * itemsPerPage + 1 }} ถึง
+                {{ Math.min(currentPage * itemsPerPage, filteredBugs.length) }}
+                จากทั้งหมด {{ filteredBugs.length }} รายการ
+              </div>
+              <div class="flex items-center space-x-1">
+                <button @click="prevPage" :disabled="currentPage === 1" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all" :class="currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 active:scale-95'">ก่อนหน้า</button>
+                <div class="flex space-x-1">
+                  <button v-for="page in visiblePages" :key="page" @click="page !== '...' ? goToPage(page) : null" :disabled="page === '...'" class="min-w-[32px] h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center px-2" :class="[currentPage === page ? 'bg-indigo-600 text-white shadow-[0_4px_10px_rgba(99,102,241,0.3)]' : 'text-slate-600 hover:bg-slate-100 active:scale-95', page === '...' ? 'cursor-default hover:bg-transparent text-slate-400' : '']">
+                    {{ page }}
+                  </button>
+                </div>
+                <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all" :class="currentPage === totalPages ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100 active:scale-95'">ถัดไป</button>
+              </div>
+            </div>
           </section>
         </template>
       </div>
     </main>
+
+    <!-- Loading Popup Overlay -->
+    <div v-if="isProcessing" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in">
+      <div class="bg-white/95 w-full max-w-sm rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] p-8 flex flex-col items-center justify-center space-y-6 text-center">
+        <div class="relative flex items-center justify-center">
+          <div class="w-16 h-16 rounded-full border-2 border-indigo-500/10 border-t-indigo-500 animate-spin shadow-[0_0_15px_rgba(99,102,241,0.15)]"></div>
+          <div class="absolute w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 animate-pulse shadow-[0_0_20px_rgba(99,102,241,0.5)] opacity-80"></div>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-extrabold text-slate-800 tracking-wide">{{ processingMessage }}</h3>
+          <p class="text-[10px] font-bold text-slate-400 tracking-wider">กรุณารอสักครู่ ระบบกำลังเชื่อมต่อกับเซิร์ฟเวอร์...</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal: Add / Edit Bug -->
     <div
@@ -386,8 +421,8 @@
               <input
                 type="text"
                 v-model="formState.bugId"
-                placeholder="ตัวอย่าง ปรับให้ตรงตาม Figma UBI-${code}1"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                readonly
+                class="w-full bg-slate-100/70 border border-slate-200 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-slate-500 cursor-not-allowed select-none"
               />
             </div>
             <div class="space-y-1.5">
@@ -823,287 +858,123 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import Swal from "sweetalert2";
+import { useBugs } from "~/composables/useBugs";
 
-const isLoading = ref(true);
+const { bugsList, isLoading, fetchBugs, addBug, updateBug, deleteBug } = useBugs("อยู่ในความต้องการ");
 
-// SweetAlert Toast definition
 let Toast = null;
-onMounted(() => {
-  Toast = Swal.mixin({
-    toast: true,
-    position: "top-end",
-    showConfirmButton: false,
-    timer: 2500,
-    timerProgressBar: true,
-    customClass: {
-      popup: "rounded-2xl border border-slate-100 shadow-lg text-xs",
-    },
-    didOpen: (toast) => {
-      toast.addEventListener("mouseenter", Swal.stopTimer);
-      toast.addEventListener("mouseleave", Swal.resumeTimer);
-    },
-  });
+onMounted(() => { fetchBugs(); Toast = Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 2500, timerProgressBar: true, customClass: { popup: "rounded-2xl border border-slate-100 shadow-lg text-xs" }, didOpen: (toast) => { toast.addEventListener("mouseenter", Swal.stopTimer); toast.addEventListener("mouseleave", Swal.resumeTimer); } }); });
+const triggerToast = (icon, title) => { if (Toast) Toast.fire({ icon, title }); };
 
-  // Simulated content loading sequence
-  setTimeout(() => {
-    isLoading.value = false;
-  }, 600);
-});
-
-const triggerToast = (icon, title) => {
-  if (Toast) {
-    Toast.fire({ icon, title });
-  }
-};
+const isProcessing = ref(false);
+const processingMessage = ref("กำลังประมวลผล...");
+const showLoadingPopup = (t = "กำลังประมวลผล...") => { processingMessage.value = t; isProcessing.value = true; };
+const closeLoadingPopup = () => { isProcessing.value = false; };
 
 const filterDropdownOpen = ref(false);
 const formStatusDropdownOpen = ref(false);
+const closeAllDropdowns = (e) => { if (!e.target.closest(".custom-select-container")) { filterDropdownOpen.value = false; formStatusDropdownOpen.value = false; } };
+onMounted(() => { document.addEventListener("click", closeAllDropdowns); });
+onUnmounted(() => { document.removeEventListener("click", closeAllDropdowns); });
 
-const closeAllDropdowns = (e) => {
-  if (!e.target.closest(".custom-select-container")) {
-    filterDropdownOpen.value = false;
-    formStatusDropdownOpen.value = false;
-  }
-};
-
-onMounted(() => {
-  document.addEventListener("click", closeAllDropdowns);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", closeAllDropdowns);
-});
-
-// Summary statistics for custom module
 const bugSummaryStats = computed(() => {
   const total = bugsList.value.length;
   const pass = bugsList.value.filter((b) => b.status === "Pass").length;
   const defect = bugsList.value.filter((b) => b.status === "Defect").length;
-  const demoFail = bugsList.value.filter(
-    (b) => b.status === "Demo Fail",
-  ).length;
-
+  const demoFail = bugsList.value.filter((b) => b.status === "Demo Fail").length;
   return [
-    {
-      label: "บั๊กทั้งหมด (Total)",
-      value: `${total} รายการ`,
-      icon: "📊",
-      gradient: "from-sky-400 to-indigo-500",
-    },
-    {
-      label: "ผ่านการทดสอบ (Pass)",
-      value: `${pass} รายการ`,
-      icon: "🟢",
-      gradient: "from-emerald-400 to-teal-500",
-    },
-    {
-      label: "รอแก้ไข (Defect)",
-      value: `${defect} รายการ`,
-      icon: "🔴",
-      gradient: "from-rose-400 to-red-500",
-    },
-    {
-      label: "ไม่ผ่าน (Demo Fail)",
-      value: `${demoFail} รายการ`,
-      icon: "🟠",
-      gradient: "from-amber-400 to-orange-500",
-    },
+    { label: "บั๊กทั้งหมด (Total)", value: `${total} รายการ`, icon: "📊", gradient: "from-sky-400 to-indigo-500" },
+    { label: "ผ่านการทดสอบ (Pass)", value: `${pass} รายการ`, icon: "🟢", gradient: "from-emerald-400 to-teal-500" },
+    { label: "รอแก้ไข (Defect)", value: `${defect} รายการ`, icon: "🔴", gradient: "from-rose-400 to-red-500" },
+    { label: "ไม่ผ่าน (Demo Fail)", value: `${demoFail} รายการ`, icon: "🟠", gradient: "from-amber-400 to-orange-500" },
   ];
 });
 
-// Raw custom module bug lists
-const bugsList = ref([
-  {
-    id: 1,
-    bugId: "UBI-${code}1",
-    title: "ข้อผิดพลาดเลย์เอาต์ดีไซน์บนหน้า ${title}",
-    comments: [
-      "ดีไซน์ส่วนหัวข้อความจืดชืดไม่สอดคล้องกับ Figma",
-      "ระยะห่างปุ่มกดแคบเกินไปทำให้กดลำบากบนมือถือ",
-      "ต้องการปรับฟอนต์ให้ใช้เป็นสไตล์แบบไม่มีหัวหัวกลมมน",
-    ],
-    expectation: "แก้ไขดีไซน์และฟอนต์ตามมาตรฐาน Figma",
-    driveLink: "",
-    figmaLink: "https://figma.com",
-    status: "Defect",
-    createdDate: "26/06/2569 11:15",
-    fixedDate: "",
-    passedDate: "",
-  },
-  {
-    id: 2,
-    bugId: "UBI-${code}2",
-    title: "ระบบการคำนวณและกรองข้อมูลหน้า ${title}",
-    comments: [
-      "ไม่มีตัวกรองช่วงเวลาในรายงานหลัก",
-      "การจัดเรียงหัวข้อตามรหัสหลักไม่ทำงาน",
-    ],
-    expectation: "ตัวกรองทำงานได้ครบถ้วนและแม่นยำ",
-    driveLink: "https://drive.google.com",
-    figmaLink: "",
-    status: "Ready For Demo",
-    createdDate: "27/06/2569 15:40",
-    fixedDate: "27/06/2569 18:20",
-    passedDate: "",
-  },
-]);
-
 const searchQuery = ref("");
 const statusFilter = ref("");
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+watch([searchQuery, statusFilter], () => { currentPage.value = 1; });
 
-const filteredBugs = computed(() => {
-  return bugsList.value.filter((item) => {
-    // Search filter
-    const matchesSearch =
-      item.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.bugId.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      item.comments.some((c) =>
-        c.toLowerCase().includes(searchQuery.value.toLowerCase()),
-      );
+const filteredBugs = computed(() => bugsList.value.filter((item) => {
+  const matchesSearch = item.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || item.bugId.toLowerCase().includes(searchQuery.value.toLowerCase()) || item.comments.some((c) => c.toLowerCase().includes(searchQuery.value.toLowerCase()));
+  let matchesStatus = true;
+  if (statusFilter.value) matchesStatus = item.status === statusFilter.value;
+  return matchesSearch && matchesStatus;
+}));
 
-    // Status filter
-    let matchesStatus = true;
-    if (statusFilter.value) {
-      matchesStatus = item.status === statusFilter.value;
-    }
+const totalPages = computed(() => Math.ceil(filteredBugs.value.length / itemsPerPage.value) || 1);
+const paginatedBugs = computed(() => { const s = (currentPage.value - 1) * itemsPerPage.value; return filteredBugs.value.slice(s, s + itemsPerPage.value); });
+const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
+const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
+const goToPage = (p) => { currentPage.value = p; };
+const visiblePages = computed(() => { const t = totalPages.value, c = currentPage.value, d = 1, r = [], rwd = []; let l; for (let i = 1; i <= t; i++) { if (i === 1 || i === t || (i >= c - d && i <= c + d)) r.push(i); } for (let i of r) { if (l) { if (i - l === 2) rwd.push(l + 1); else if (i - l !== 1) rwd.push("..."); } rwd.push(i); l = i; } return rwd; });
 
-    return matchesSearch && matchesStatus;
-  });
-});
-
-// Modal states
 const showFormModal = ref(false);
 const showViewModal = ref(false);
 const showDeleteModal = ref(false);
-const formType = ref("add"); // 'add' or 'edit'
+const formType = ref("add");
 const selectedBug = ref(null);
 const bugToDelete = ref(null);
-
-const formState = ref({
-  id: null,
-  bugId: "",
-  title: "",
-  comments: [],
-  expectation: "",
-  driveLink: "",
-  figmaLink: "",
-  status: "Defect",
-  createdDate: "",
-  fixedDate: "",
-  passedDate: "",
-});
-
+const formState = ref({ id: null, sheetRowIndex: null, bugId: "", title: "", comments: [], expectation: "", driveLink: "", figmaLink: "", status: "Defect", createdDate: "", fixedDate: "", passedDate: "" });
 const formCommentsRaw = ref("");
 
-const openAddModal = () => {
-  formType.value = "add";
-  formCommentsRaw.value = "";
-  formState.value = {
-    id: null,
-    bugId: "",
-    title: "",
-    comments: [],
-    expectation: "",
-    driveLink: "",
-    figmaLink: "",
-    status: "Defect",
-    createdDate: new Date().toLocaleString("th-TH"),
-    fixedDate: "",
-    passedDate: "",
-  };
-  showFormModal.value = true;
-};
+const generateNextBugId = () => { if (bugsList.value.length === 0) return "UBIV1"; let m = 0; bugsList.value.forEach((b) => { const x = b.bugId.match(/^UBIV(\d+)$/i); if (x) { const n = parseInt(x[1], 10); if (n > m) m = n; } }); return `UBIV${m + 1}`; };
 
-const openEditModal = (item) => {
-  formType.value = "edit";
-  formCommentsRaw.value = item.comments.join("\\n");
-  formState.value = { ...item };
-  showFormModal.value = true;
-};
+const openAddModal = () => { formType.value = "add"; formCommentsRaw.value = ""; formState.value = { id: null, sheetRowIndex: null, bugId: generateNextBugId(), title: "", comments: [], expectation: "", driveLink: "", figmaLink: "", status: "Defect", createdDate: new Date().toLocaleString("th-TH"), fixedDate: "", passedDate: "" }; showFormModal.value = true; };
+const openEditModal = (item) => { formType.value = "edit"; formCommentsRaw.value = item.comments.join("\n"); formState.value = { ...item }; showFormModal.value = true; };
+const openViewModal = (item) => { selectedBug.value = item; showViewModal.value = true; };
+const closeFormModal = () => { showFormModal.value = false; };
+const closeViewModal = () => { showViewModal.value = false; };
 
-const openViewModal = (item) => {
-  selectedBug.value = item;
-  showViewModal.value = true;
-};
-
-const closeFormModal = () => {
-  showFormModal.value = false;
-};
-
-const closeViewModal = () => {
-  showViewModal.value = false;
-};
-
-const saveBug = () => {
-  if (
-    !formState.value.bugId ||
-    !formState.value.title ||
-    !formCommentsRaw.value
-  ) {
-    triggerToast("error", "กรุณากรอกฟิลด์ที่จำเป็น (*) ให้ครบถ้วน");
-    return;
-  }
-
-  // Parse comments
-  formState.value.comments = formCommentsRaw.value
-    .split("\\n")
-    .map((c) => c.trim())
-    .filter((c) => c.length > 0);
-
-  if (formType.value === "add") {
-    const newId = bugsList.value.length
-      ? Math.max(...bugsList.value.map((b) => b.id)) + 1
-      : 1;
-    bugsList.value.push({
-      ...formState.value,
-      id: newId,
-    });
-    triggerToast("success", "เพิ่มบันทึกบั๊กสำเร็จแล้ว");
-  } else {
-    const index = bugsList.value.findIndex((b) => b.id === formState.value.id);
-    if (index !== -1) {
-      bugsList.value[index] = { ...formState.value };
-      triggerToast("success", "แก้ไขข้อมูลบั๊กสำเร็จแล้ว");
-    }
-  }
+const saveBug = async () => {
+  if (!formState.value.bugId || !formCommentsRaw.value) { triggerToast("error", "กรุณากรอกฟิลด์ที่จำเป็น (*) ให้ครบถ้วน"); return; }
+  formState.value.comments = formCommentsRaw.value.split("\n").map((c) => c.trim()).filter((c) => c.length > 0);
   closeFormModal();
-};
-
-const confirmDelete = (item) => {
-  bugToDelete.value = item;
-  showDeleteModal.value = true;
-};
-
-const closeDeleteModal = () => {
-  showDeleteModal.value = false;
-  bugToDelete.value = null;
-};
-
-const executeDelete = () => {
-  if (bugToDelete.value) {
-    bugsList.value = bugsList.value.filter(
-      (b) => b.id !== bugToDelete.value.id,
-    );
-    triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว");
+  if (formType.value === "add") {
+    showLoadingPopup("กำลังบันทึกข้อมูลบั๊กใหม่...");
+    const success = await addBug({ bugId: formState.value.bugId, title: formState.value.title, comments: formState.value.comments, expectation: formState.value.expectation, driveLink: formState.value.driveLink, figmaLink: formState.value.figmaLink, status: formState.value.status, createdDate: formState.value.createdDate, fixedDate: formState.value.fixedDate, passedDate: formState.value.passedDate });
+    closeLoadingPopup();
+    triggerToast(success ? "success" : "error", success ? "เพิ่มบันทึกบั๊กสำเร็จแล้ว" : "ไม่สามารถเพิ่มข้อมูลได้");
+  } else {
+    showLoadingPopup("กำลังอัปเดตข้อมูลบั๊ก...");
+    const success = await updateBug(formState.value);
+    closeLoadingPopup();
+    triggerToast(success ? "success" : "error", success ? "แก้ไขข้อมูลบั๊กสำเร็จแล้ว" : "ไม่สามารถอัปเดตข้อมูลได้");
   }
-  closeDeleteModal();
 };
 
-const statusClass = (status) => {
-  if (status === "Defect")
-    return "bg-[#ffe4e6] text-[#b91c1c] border border-red-200";
-  if (status === "Demo")
-    return "bg-[#fef3c7] text-[#b45309] border border-amber-200";
-  if (status === "Demo Fail")
-    return "bg-[#fee2e2] text-[#dc2626] border border-red-200";
-  if (status === "Pass")
-    return "bg-[#d1fae5] text-[#065f46] border border-emerald-200";
-  if (status === "Ready For Demo")
-    return "bg-[#dbeafe] text-[#1e40af] border border-blue-200";
-  if (status === "Doing")
-    return "bg-[#f3e8ff] text-[#6b21a8] border border-purple-200";
+const confirmDelete = (item) => { bugToDelete.value = item; showDeleteModal.value = true; };
+const closeDeleteModal = () => { showDeleteModal.value = false; bugToDelete.value = null; };
+const executeDelete = async () => {
+  console.log("executeDelete triggered for:", bugToDelete.value);
+  if (bugToDelete.value) {
+    const targetRowIndex = bugToDelete.value.sheetRowIndex;
+    console.log("sheetRowIndex is:", targetRowIndex);
+    closeDeleteModal(); showLoadingPopup("กำลังลบข้อมูลบั๊ก...");
+    try {
+      const success = await deleteBug(targetRowIndex); closeLoadingPopup();
+      if (success) { triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว"); if (paginatedBugs.value.length === 0 && currentPage.value > 1) currentPage.value--; }
+      else triggerToast("error", "ไม่สามารถลบข้อมูลได้");
+    } catch (err) {
+      console.error("Error in executeDelete:", err);
+      closeLoadingPopup();
+      triggerToast("error", "เกิดข้อผิดพลาดขณะลบข้อมูล");
+    }
+  } else {
+    console.warn("bugToDelete.value is null");
+  }
+};
+
+const statusClass = (s) => {
+  if (s === "Defect") return "bg-[#ffe4e6] text-[#b91c1c] border border-red-200";
+  if (s === "Demo") return "bg-[#fef3c7] text-[#b45309] border border-amber-200";
+  if (s === "Demo Fail") return "bg-[#fee2e2] text-[#dc2626] border border-red-200";
+  if (s === "Pass") return "bg-[#d1fae5] text-[#065f46] border border-emerald-200";
+  if (s === "Ready For Demo") return "bg-[#dbeafe] text-[#1e40af] border border-blue-200";
+  if (s === "Doing") return "bg-[#f3e8ff] text-[#6b21a8] border border-purple-200";
   return "bg-slate-100 text-slate-700 border border-slate-200";
 };
 </script>

@@ -18,8 +18,11 @@
           <!-- Category Header (If has children, acts as Accordion Trigger) -->
           <div v-if="menu.children">
             <button
-              @click="toggleCategory(menu.name)"
-              class="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 select-none text-slate-300 hover:text-white hover:bg-slate-800/60"
+              @click="isCategoryEnabled(menu) ? toggleCategory(menu.name) : null"
+              class="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 select-none text-slate-300"
+              :class="isCategoryEnabled(menu)
+                ? 'hover:text-white hover:bg-slate-800/60'
+                : 'opacity-30 cursor-not-allowed pointer-events-none'"
             >
               <div class="flex items-center">
                 <span class="mr-2.5 text-xs text-slate-500 font-bold select-none">{{ menu.icon }}</span>
@@ -30,6 +33,7 @@
               <span 
                 class="text-[9px] text-slate-500 transition-transform duration-200"
                 :class="isExpanded(menu.name) ? 'rotate-90 text-slate-300' : ''"
+                v-if="isCategoryEnabled(menu)"
               >
                 ▶
               </span>
@@ -42,9 +46,14 @@
                   <NuxtLink
                     :to="child.to"
                     class="flex items-center px-3 py-2.5 rounded-xl text-[11px] font-semibold transition-all duration-150 select-none"
-                    :class="isActiveRoute(child.to)
-                      ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-900/30'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/40'"
+                    :class="[
+                      !isMenuEnabled(child.to)
+                        ? 'opacity-30 cursor-not-allowed pointer-events-none'
+                        : '',
+                      isActiveRoute(child.to)
+                        ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-900/30'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                    ]"
                   >
                     <!-- Chevron › indicator -->
                     <span 
@@ -63,9 +72,14 @@
             v-else
             :to="menu.to"
             class="flex items-center px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 select-none"
-            :class="isActiveRoute(menu.to)
-              ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-900/30'
-              : 'text-slate-300 hover:text-white hover:bg-slate-800/60'"
+            :class="[
+              !isMenuEnabled(menu.to)
+                ? 'opacity-30 cursor-not-allowed pointer-events-none'
+                : '',
+              isActiveRoute(menu.to)
+                ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-900/30'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            ]"
           >
             <span class="mr-2.5 text-xs text-slate-500 font-bold select-none" :class="isActiveRoute(menu.to) ? 'text-white' : ''">{{ menu.icon }}</span>
             {{ menu.name }}
@@ -195,6 +209,16 @@ const isExpanded = (name) => {
 // Active Route checking logic
 const isActiveRoute = (path) => {
   return route.path === path
+}
+
+// Function to check if a specific menu item is enabled
+const isMenuEnabled = (to) => {
+  return true
+}
+
+// Function to check if a category header is enabled (has at least one enabled child or is enabled itself)
+const isCategoryEnabled = (menu) => {
+  return true
 }
 </script>
 

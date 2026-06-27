@@ -8,9 +8,13 @@ export default defineNuxtConfig({
     ],
   },
   app: {
-    baseURL: process.env.NUXT_PUBLIC_BASE_URL,
     head: {
       title: 'MCOP INVESTMENT MONITOR'
+    }
+  },
+  runtimeConfig: {
+    public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || process.env.API_BASE || 'http://localhost:8080/api/data'
     }
   },
 

@@ -1,13 +1,9 @@
 <template>
   <div class="flex h-screen bg-transparent font-sans text-slate-800">
-    <!-- Sidebar Navigation -->
     <AppSidebar />
 
-    <!-- Main Content Area -->
     <main class="flex-1 flex flex-col overflow-hidden">
-      <!-- Content Scroll Container -->
       <div class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-        <!-- Header Section -->
         <div
           class="flex items-center justify-between pb-4 border-b border-slate-200"
         >
@@ -22,7 +18,6 @@
               หุ้นกู้ (Debentures)
             </h2>
           </div>
-          <!-- Add Bug Button -->
           <button
             @click="openAddModal"
             class="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:opacity-95 active:scale-95 px-5 py-2.5 rounded-full text-white text-xs font-extrabold shadow-[0_4px_14px_rgba(99,102,241,0.2)] transition-all flex items-center space-x-1.5 select-none"
@@ -31,22 +26,18 @@
           </button>
         </div>
 
-        <!-- Premium Loading spinner container -->
         <div
           v-if="isLoading"
           class="flex flex-col items-center justify-center py-40 space-y-6"
         >
           <div class="relative flex items-center justify-center">
-            <!-- Outer spinning ring -->
             <div
               class="w-16 h-16 rounded-full border-2 border-indigo-500/10 border-t-indigo-500 animate-spin shadow-[0_0_15px_rgba(99,102,241,0.15)]"
             ></div>
-            <!-- Inner pulsing glowing core -->
             <div
               class="absolute w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 animate-pulse shadow-[0_0_20px_rgba(99,102,241,0.5)] opacity-80"
             ></div>
           </div>
-          <!-- Premium tracking text with gradient -->
           <div class="flex flex-col items-center space-y-1">
             <span
               class="text-xs font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-slate-600 via-indigo-500 to-sky-500 uppercase animate-pulse"
@@ -59,16 +50,13 @@
           </div>
         </div>
 
-        <!-- Main Content Area when loaded -->
         <template v-else>
-          <!-- Stats summary cards -->
           <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div
               v-for="(stat, index) in bugSummaryStats"
               :key="index"
               class="relative bg-white p-6 rounded-[22px] border border-slate-200/80 shadow-[0_4px_18px_rgba(0,0,0,0.015)] hover:shadow-[0_8px_24px_rgba(99,102,241,0.05)] hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between overflow-hidden"
             >
-              <!-- Top color line indicator -->
               <span
                 class="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r"
                 :class="stat.gradient"
@@ -92,7 +80,6 @@
             </div>
           </section>
 
-          <!-- Main Bug Tracking Table & Filters -->
           <section
             class="bg-white rounded-[22px] border border-slate-200/80 shadow-[0_4px_18_rgba(0,0,0,0.015)] p-6 space-y-6"
           >
@@ -103,9 +90,7 @@
                 รายการบั๊กทั้งหมด (Defect Tracking List)
               </h3>
 
-              <!-- Quick Filter and Search -->
               <div class="flex items-center gap-3 w-full sm:w-auto">
-                <!-- Search box -->
                 <div
                   class="flex items-center bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 focus-within:bg-white focus-within:border-indigo-300 focus-within:shadow-[0_2px_10px_rgba(99,102,241,0.04)] transition-all duration-200 w-full sm:w-64"
                 >
@@ -118,7 +103,6 @@
                   />
                 </div>
 
-                <!-- Custom Status filter dropdown -->
                 <div
                   class="relative min-w-[170px] shrink-0 custom-select-container"
                 >
@@ -189,7 +173,6 @@
               </div>
             </div>
 
-            <!-- Table Container with clearly separated fields (แยกช่องชัดเจน) -->
             <div class="overflow-x-auto border border-slate-200/80 rounded-2xl">
               <table class="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
@@ -211,21 +194,18 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200">
                   <tr
-                    v-for="item in filteredBugs"
+                    v-for="item in paginatedBugs"
                     :key="item.id"
                     class="text-xs transition-all hover:bg-slate-50/70 border-b border-slate-100 group"
                   >
-                    <!-- ID -->
                     <td class="py-4 pl-4 font-black text-slate-900 align-top">
                       {{ item.bugId }}
                     </td>
 
-                    <!-- รายละเอียด -->
                     <td class="py-4 font-bold text-slate-800 align-top">
                       {{ item.title }}
                     </td>
 
-                    <!-- ความคิดเห็น (Checklist) -->
                     <td class="py-4 text-slate-800 align-top pr-4">
                       <ul class="space-y-1">
                         <li
@@ -244,12 +224,10 @@
                       </ul>
                     </td>
 
-                    <!-- ความคาดหวัง -->
                     <td class="py-4 text-slate-700 font-bold align-top">
                       {{ item.expectation || "" }}
                     </td>
 
-                    <!-- ภาพประกอบ -->
                     <td class="py-4 align-top text-center">
                       <a
                         v-if="item.driveLink"
@@ -262,7 +240,6 @@
                       <span v-else></span>
                     </td>
 
-                    <!-- @figmaLink -->
                     <td class="py-4 align-top text-center">
                       <a
                         v-if="item.figmaLink"
@@ -275,7 +252,6 @@
                       <span v-else></span>
                     </td>
 
-                    <!-- สถานะ -->
                     <td class="py-4 align-top text-center">
                       <span
                         class="px-2.5 py-0.5 rounded-full text-[9px] font-black inline-block uppercase tracking-wider"
@@ -285,22 +261,18 @@
                       </span>
                     </td>
 
-                    <!-- วันที่สร้าง -->
                     <td class="py-4 align-top text-slate-700 font-bold">
                       {{ item.createdDate || "" }}
                     </td>
 
-                    <!-- วันที่แก้ไข -->
                     <td class="py-4 align-top text-slate-700 font-bold">
                       {{ item.fixedDate || "" }}
                     </td>
 
-                    <!-- วันที่ผ่าน -->
                     <td class="py-4 align-top text-slate-700 font-bold">
                       {{ item.passedDate || "" }}
                     </td>
 
-                    <!-- Actions -->
                     <td
                       class="py-4 align-top text-center pr-4 space-x-1.5 whitespace-nowrap"
                     >
@@ -324,7 +296,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr v-if="filteredBugs.length === 0">
+                  <tr v-if="paginatedBugs.length === 0">
                     <td
                       colspan="11"
                       class="py-8 text-center text-slate-400 font-medium"
@@ -335,12 +307,101 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination Bar -->
+            <div
+              class="flex items-center justify-between mt-4 px-2"
+              v-if="filteredBugs.length > 0"
+            >
+              <div
+                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide"
+              >
+                แสดง {{ (currentPage - 1) * itemsPerPage + 1 }} ถึง
+                {{
+                  Math.min(currentPage * itemsPerPage, filteredBugs.length)
+                }}
+                จากทั้งหมด {{ filteredBugs.length }} รายการ
+              </div>
+              <div class="flex items-center space-x-1">
+                <button
+                  @click="prevPage"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === 1
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ก่อนหน้า
+                </button>
+
+                <div class="flex space-x-1">
+                  <button
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="page !== '...' ? goToPage(page) : null"
+                    :disabled="page === '...'"
+                    class="min-w-[32px] h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center px-2"
+                    :class="[
+                      currentPage === page
+                        ? 'bg-indigo-600 text-white shadow-[0_4px_10px_rgba(99,102,241,0.3)]'
+                        : 'text-slate-600 hover:bg-slate-100 active:scale-95',
+                      page === '...'
+                        ? 'cursor-default hover:bg-transparent text-slate-400'
+                        : '',
+                    ]"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === totalPages
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ถัดไป
+                </button>
+              </div>
+            </div>
           </section>
         </template>
       </div>
     </main>
 
-    <!-- Modal: Add / Edit Bug -->
+    <!-- Loading Popup Overlay ขณะยิง API -->
+    <div
+      v-if="isProcessing"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in"
+    >
+      <div
+        class="bg-white/95 w-full max-w-sm rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] p-8 flex flex-col items-center justify-center space-y-6 text-center"
+      >
+        <div class="relative flex items-center justify-center">
+          <div
+            class="w-16 h-16 rounded-full border-2 border-indigo-500/10 border-t-indigo-500 animate-spin shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+          ></div>
+          <div
+            class="absolute w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 animate-pulse shadow-[0_0_20px_rgba(99,102,241,0.5)] opacity-80"
+          ></div>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-extrabold text-slate-800 tracking-wide">
+            {{ processingMessage }}
+          </h3>
+          <p class="text-[10px] font-bold text-slate-400 tracking-wider">
+            กรุณารอสักครู่ ระบบกำลังเชื่อมต่อกับเซิร์ฟเวอร์...
+          </p>
+        </div>
+      </div>
+    </div>
+
     <div
       v-if="showFormModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in"
@@ -348,7 +409,6 @@
       <div
         class="bg-white/95 w-full max-w-3xl rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] flex flex-col max-h-[90vh] overflow-hidden"
       >
-        <!-- Header -->
         <div
           class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50/40 via-white to-transparent shrink-0"
         >
@@ -372,11 +432,9 @@
           </button>
         </div>
 
-        <!-- Scrollable Form Fields -->
         <div
           class="flex-1 overflow-y-auto px-6 py-5 space-y-4.5 custom-scrollbar text-xs"
         >
-          <!-- Bug ID & Title -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="font-bold text-slate-500 tracking-wider"
@@ -385,8 +443,8 @@
               <input
                 type="text"
                 v-model="formState.bugId"
-                placeholder="ตัวอย่าง ปรับให้ตรงตาม Figma UBIV3"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                readonly
+                class="w-full bg-slate-100/70 border border-slate-200 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-slate-500 cursor-not-allowed select-none"
               />
             </div>
             <div class="space-y-1.5">
@@ -402,7 +460,6 @@
             </div>
           </div>
 
-          <!-- Comments Checklist -->
           <div class="space-y-1.5">
             <label
               class="font-bold text-slate-500 tracking-wider flex items-center justify-between"
@@ -420,7 +477,6 @@
             ></textarea>
           </div>
 
-          <!-- Expectation -->
           <div class="space-y-1.5">
             <label class="font-bold text-slate-500 tracking-wider"
               >ความคาดหวัง (EXPECTATION)</label
@@ -433,7 +489,6 @@
             />
           </div>
 
-          <!-- Google Drive & Figma Links -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="space-y-1.5">
               <label class="font-bold text-slate-500 tracking-wider"
@@ -459,7 +514,6 @@
             </div>
           </div>
 
-          <!-- Dates: Created, Fixed, Passed -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="space-y-1.5">
               <label class="font-bold text-slate-500 tracking-wider"
@@ -496,7 +550,6 @@
             </div>
           </div>
 
-          <!-- Custom Status Dropdown -->
           <div class="space-y-1.5 custom-select-container">
             <label class="font-bold text-slate-500 tracking-wider"
               >สถานะ *</label
@@ -557,7 +610,6 @@
           </div>
         </div>
 
-        <!-- Footer -->
         <div
           class="flex justify-end space-x-3 px-6 py-4.5 border-t border-slate-100 bg-slate-50/50 shrink-0"
         >
@@ -577,7 +629,6 @@
       </div>
     </div>
 
-    <!-- Modal: View Details -->
     <div
       v-if="showViewModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in"
@@ -585,7 +636,6 @@
       <div
         class="bg-white w-full max-w-2xl rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] flex flex-col max-h-[85vh] overflow-hidden"
       >
-        <!-- Header Banner matching status color -->
         <div
           class="px-6 py-5 border-b shrink-0 flex items-center justify-between"
           :class="[
@@ -627,11 +677,9 @@
           </button>
         </div>
 
-        <!-- View Content -->
         <div
           class="flex-1 overflow-y-auto px-6 py-6 space-y-5 custom-scrollbar text-xs"
         >
-          <!-- Title & Expectation -->
           <div
             class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50/50 border border-slate-100/50 rounded-2xl p-4"
           >
@@ -655,7 +703,6 @@
             </div>
           </div>
 
-          <!-- Comments Checklist -->
           <div class="space-y-2">
             <span
               class="font-bold text-slate-500 text-[10px] uppercase tracking-wider block"
@@ -683,7 +730,6 @@
             </div>
           </div>
 
-          <!-- Attachments Grid -->
           <div class="space-y-2">
             <span
               class="font-bold text-slate-500 text-[10px] uppercase tracking-wider block"
@@ -722,7 +768,6 @@
             </div>
           </div>
 
-          <!-- Timeline & Dates -->
           <div
             class="border-t border-slate-100 pt-4 grid grid-cols-3 gap-3 text-center"
           >
@@ -762,7 +807,6 @@
           </div>
         </div>
 
-        <!-- Footer -->
         <div
           class="flex justify-end px-6 py-4 border-t border-slate-100 bg-slate-50/50 shrink-0"
         >
@@ -776,7 +820,6 @@
       </div>
     </div>
 
-    <!-- Modal: Confirm Delete -->
     <div
       v-if="showDeleteModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in"
@@ -784,7 +827,6 @@
       <div
         class="bg-white w-full max-w-md rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] p-6 text-center"
       >
-        <!-- Warning Icon Circle -->
         <div
           class="mx-auto w-16 h-16 rounded-full bg-rose-50 border border-rose-100 text-rose-500 flex items-center justify-center mb-4 text-2xl select-none animate-bounce"
         >
@@ -801,7 +843,6 @@
           การดำเนินการนี้จะไม่สามารถกู้คืนข้อมูลได้
         </p>
 
-        <!-- Action Buttons -->
         <div class="flex items-center justify-center space-x-3">
           <button
             @click="closeDeleteModal"
@@ -822,7 +863,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import Swal from "sweetalert2";
 import { useBugs } from "~/composables/useBugs";
 
@@ -856,6 +897,20 @@ const triggerToast = (icon, title) => {
   }
 };
 
+// --- ฟังก์ชันสำหรับ Native Loading Popup ---
+const isProcessing = ref(false);
+const processingMessage = ref("กำลังประมวลผล...");
+
+const showLoadingPopup = (titleText = "กำลังประมวลผล...") => {
+  processingMessage.value = titleText;
+  isProcessing.value = true;
+};
+
+const closeLoadingPopup = () => {
+  isProcessing.value = false;
+};
+
+// --- จัดการ Dropdown ---
 const filterDropdownOpen = ref(false);
 const formStatusDropdownOpen = ref(false);
 
@@ -914,6 +969,14 @@ const bugSummaryStats = computed(() => {
 const searchQuery = ref("");
 const statusFilter = ref("");
 
+// --- ระบบแบ่งหน้า (Pagination) ---
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
+watch([searchQuery, statusFilter], () => {
+  currentPage.value = 1;
+});
+
 const filteredBugs = computed(() => {
   return bugsList.value.filter((item) => {
     // Search filter
@@ -932,6 +995,62 @@ const filteredBugs = computed(() => {
 
     return matchesSearch && matchesStatus;
   });
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredBugs.value.length / itemsPerPage.value) || 1;
+});
+
+const paginatedBugs = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredBugs.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++;
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) currentPage.value--;
+};
+
+const goToPage = (page) => {
+  currentPage.value = page;
+};
+
+const visiblePages = computed(() => {
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const delta = 1;
+
+  const range = [];
+  const rangeWithDots = [];
+  let l;
+
+  for (let i = 1; i <= total; i++) {
+    if (
+      i === 1 ||
+      i === total ||
+      (i >= current - delta && i <= current + delta)
+    ) {
+      range.push(i);
+    }
+  }
+
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push("...");
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+
+  return rangeWithDots;
 });
 
 // Modal states
@@ -959,13 +1078,32 @@ const formState = ref({
 
 const formCommentsRaw = ref("");
 
+// ฟังก์ชันสุ่ม/หารหัสบั๊กถัดไป
+const generateNextBugId = () => {
+  if (bugsList.value.length === 0) return "UBIV1";
+
+  let maxNum = 0;
+
+  bugsList.value.forEach((bug) => {
+    const match = bug.bugId.match(/^UBIV(\d+)$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) {
+        maxNum = num;
+      }
+    }
+  });
+
+  return `UBIV${maxNum + 1}`;
+};
+
 const openAddModal = () => {
   formType.value = "add";
   formCommentsRaw.value = "";
   formState.value = {
     id: null,
     sheetRowIndex: null,
-    bugId: "",
+    bugId: generateNextBugId(), // เรียกใช้ฟังก์ชันดึงเลขบั๊กอัตโนมัติที่นี่
     title: "",
     comments: [],
     expectation: "",
@@ -1011,7 +1149,11 @@ const saveBug = async () => {
     .map((c) => c.trim())
     .filter((c) => c.length > 0);
 
+  // ปิด Modal form ก่อน แล้วค่อยแสดง loading
+  closeFormModal();
+
   if (formType.value === "add") {
+    showLoadingPopup("กำลังบันทึกข้อมูลบั๊กใหม่...");
     const success = await addBug({
       bugId: formState.value.bugId,
       title: formState.value.title,
@@ -1024,20 +1166,22 @@ const saveBug = async () => {
       fixedDate: formState.value.fixedDate,
       passedDate: formState.value.passedDate,
     });
+    closeLoadingPopup();
     if (success) {
       triggerToast("success", "เพิ่มบันทึกบั๊กสำเร็จแล้ว");
     } else {
       triggerToast("error", "ไม่สามารถเพิ่มข้อมูลได้");
     }
   } else {
+    showLoadingPopup("กำลังอัปเดตข้อมูลบั๊ก...");
     const success = await updateBug(formState.value);
+    closeLoadingPopup();
     if (success) {
       triggerToast("success", "แก้ไขข้อมูลบั๊กสำเร็จแล้ว");
     } else {
       triggerToast("error", "ไม่สามารถอัปเดตข้อมูลได้");
     }
   }
-  closeFormModal();
 };
 
 const confirmDelete = (item) => {
@@ -1051,15 +1195,36 @@ const closeDeleteModal = () => {
 };
 
 const executeDelete = async () => {
+  console.log("executeDelete triggered for:", bugToDelete.value);
   if (bugToDelete.value) {
-    const success = await deleteBug(bugToDelete.value.sheetRowIndex);
-    if (success) {
-      triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว");
-    } else {
-      triggerToast("error", "ไม่สามารถลบข้อมูลได้");
+    const targetRowIndex = bugToDelete.value.sheetRowIndex;
+    console.log("sheetRowIndex is:", targetRowIndex);
+    // ปิด Modal ยืนยันก่อน แล้วแสดง loading
+    closeDeleteModal();
+    showLoadingPopup("กำลังลบข้อมูลบั๊ก...");
+
+    try {
+      const success = await deleteBug(targetRowIndex);
+      console.log("deleteBug response:", success);
+      closeLoadingPopup();
+
+      if (success) {
+        triggerToast("success", "ลบข้อมูลบั๊กสำเร็จแล้ว");
+        // ถ้าลบตัวสุดท้ายของหน้านี้ ให้ถอยกลับ 1 หน้า
+        if (paginatedBugs.value.length === 0 && currentPage.value > 1) {
+          currentPage.value--;
+        }
+      } else {
+        triggerToast("error", "ไม่สามารถลบข้อมูลได้");
+      }
+    } catch (err) {
+      console.error("Error in executeDelete:", err);
+      closeLoadingPopup();
+      triggerToast("error", "เกิดข้อผิดพลาดขณะลบข้อมูล");
     }
+  } else {
+    console.warn("bugToDelete.value is null or undefined");
   }
-  closeDeleteModal();
 };
 
 const statusClass = (status) => {

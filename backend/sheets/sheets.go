@@ -13,8 +13,8 @@ type Client struct {
 	spreadsheetID string
 }
 
-// NewClient initializes the Google Sheets service client
-func NewClient(ctx context.Context, credentialsFile, spreadsheetID string) (*Client, error) {
+// NewClientFromFile initializes the Google Sheets service client using a credentials file path
+func NewClientFromFile(ctx context.Context, credentialsFile, spreadsheetID string) (*Client, error) {
 	srv, err := sheets.NewService(ctx, option.WithCredentialsFile(credentialsFile))
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Sheets client: %w", err)
@@ -25,22 +25,66 @@ func NewClient(ctx context.Context, credentialsFile, spreadsheetID string) (*Cli
 	}, nil
 }
 
-// ReadData reads values from a specific sheet range (e.g. "Sheet1!A1:D10")
+// NewClientFromJSON initializes the Google Sheets service client using raw JSON bytes
+func NewClientFromJSON(ctx context.Context, credentialsJSON []byte, spreadsheetID string) (*Client, error) {
+	srv, err := sheets.NewService(ctx, option.WithCredentialsJSON(credentialsJSON))
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve Sheets client from JSON: %w", err)
+	}
+	return &Client{
+		service:       srv,
+		spreadsheetID: spreadsheetID,
+	}, nil
+}
+
+// ReadData reads values from a specific sheet range (e.g. "Sheet1!A1:D10") and extracts hyperlinks where present
 func (c *Client) ReadData(ctx context.Context, sheetRange string) ([][]interface{}, error) {
-	resp, err := c.service.Spreadsheets.Values.Get(c.spreadsheetID, sheetRange).Context(ctx).Do()
+	spreadsheet, err := c.service.Spreadsheets.Get(c.spreadsheetID).
+		Ranges(sheetRange).
+		IncludeGridData(true).
+		Context(ctx).
+		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve data from sheet: %w", err)
 	}
-	return resp.Values, nil
+
+	if len(spreadsheet.Sheets) == 0 || len(spreadsheet.Sheets[0].Data) == 0 {
+		return [][]interface{}{}, nil
+	}
+
+	gridData := spreadsheet.Sheets[0].Data[0]
+	var result [][]interface{}
+
+	for _, row := range gridData.RowData {
+		var rowVals []interface{}
+		if len(row.Values) == 0 {
+			result = append(result, []interface{}{})
+			continue
+		}
+		for _, cell := range row.Values {
+			val := ""
+			if cell != nil {
+				if cell.Hyperlink != "" {
+					val = cell.Hyperlink
+				} else {
+					val = cell.FormattedValue
+				}
+			}
+			rowVals = append(rowVals, val)
+		}
+		result = append(result, rowVals)
+	}
+
+	return result, nil
 }
 
-// WriteData writes/appends values to a specific sheet range
+// WriteData writes/appends values to a specific sheet range using USER_ENTERED to parse formulas
 func (c *Client) WriteData(ctx context.Context, sheetRange string, values [][]interface{}) error {
 	valueRange := &sheets.ValueRange{
 		Values: values,
 	}
 	_, err := c.service.Spreadsheets.Values.Append(c.spreadsheetID, sheetRange, valueRange).
-		ValueInputOption("RAW").
+		ValueInputOption("USER_ENTERED").
 		Context(ctx).
 		Do()
 	if err != nil {
@@ -49,13 +93,13 @@ func (c *Client) WriteData(ctx context.Context, sheetRange string, values [][]in
 	return nil
 }
 
-// UpdateData updates values in a specific sheet range
+// UpdateData updates values in a specific sheet range using USER_ENTERED to parse formulas
 func (c *Client) UpdateData(ctx context.Context, sheetRange string, values [][]interface{}) error {
 	valueRange := &sheets.ValueRange{
 		Values: values,
 	}
 	_, err := c.service.Spreadsheets.Values.Update(c.spreadsheetID, sheetRange, valueRange).
-		ValueInputOption("RAW").
+		ValueInputOption("USER_ENTERED").
 		Context(ctx).
 		Do()
 	if err != nil {
@@ -108,5 +152,20 @@ func (c *Client) DeleteRow(ctx context.Context, sheetName string, rowIndex int) 
 	}
 
 	return nil
+}
+
+// GetSheetTitles retrieves all sheet titles in the spreadsheet
+func (c *Client) GetSheetTitles(ctx context.Context) ([]string, error) {
+	spreadsheet, err := c.service.Spreadsheets.Get(c.spreadsheetID).Context(ctx).Do()
+	if err != nil {
+		return nil, err
+	}
+	var titles []string
+	for _, sheet := range spreadsheet.Sheets {
+		if sheet.Properties != nil {
+			titles = append(titles, sheet.Properties.Title)
+		}
+	}
+	return titles, nil
 }
 

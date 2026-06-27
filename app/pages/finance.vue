@@ -212,7 +212,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-200">
                   <tr
-                    v-for="item in filteredBugs"
+                    v-for="item in paginatedBugs"
                     :key="item.id"
                     class="text-xs transition-all hover:bg-slate-50/70 border-b border-slate-100 group"
                   >
@@ -325,7 +325,7 @@
                       </button>
                     </td>
                   </tr>
-                  <tr v-if="filteredBugs.length === 0">
+                  <tr v-if="paginatedBugs.length === 0">
                     <td
                       colspan="11"
                       class="py-8 text-center text-slate-400 font-medium"
@@ -336,10 +336,98 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination Bar -->
+            <div
+              class="flex items-center justify-between mt-4 px-2"
+              v-if="filteredBugs.length > 0"
+            >
+              <div
+                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide"
+              >
+                แสดง {{ (currentPage - 1) * itemsPerPage + 1 }} ถึง
+                {{
+                  Math.min(currentPage * itemsPerPage, filteredBugs.length)
+                }}
+                จากทั้งหมด {{ filteredBugs.length }} รายการ
+              </div>
+              <div class="flex items-center space-x-1">
+                <button
+                  @click="prevPage"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === 1
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ก่อนหน้า
+                </button>
+                <div class="flex space-x-1">
+                  <button
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="page !== '...' ? goToPage(page) : null"
+                    :disabled="page === '...'"
+                    class="min-w-[32px] h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center px-2"
+                    :class="[
+                      currentPage === page
+                        ? 'bg-indigo-600 text-white shadow-[0_4px_10px_rgba(99,102,241,0.3)]'
+                        : 'text-slate-600 hover:bg-slate-100 active:scale-95',
+                      page === '...'
+                        ? 'cursor-default hover:bg-transparent text-slate-400'
+                        : '',
+                    ]"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === totalPages
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ถัดไป
+                </button>
+              </div>
+            </div>
           </section>
         </template>
       </div>
     </main>
+
+    <!-- Loading Popup Overlay -->
+    <div
+      v-if="isProcessing"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 animate-fade-in"
+    >
+      <div
+        class="bg-white/95 w-full max-w-sm rounded-[32px] border border-white/80 shadow-[0_24px_50px_rgba(99,102,241,0.06)] p-8 flex flex-col items-center justify-center space-y-6 text-center"
+      >
+        <div class="relative flex items-center justify-center">
+          <div
+            class="w-16 h-16 rounded-full border-2 border-indigo-500/10 border-t-indigo-500 animate-spin shadow-[0_0_15px_rgba(99,102,241,0.15)]"
+          ></div>
+          <div
+            class="absolute w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 animate-pulse shadow-[0_0_20px_rgba(99,102,241,0.5)] opacity-80"
+          ></div>
+        </div>
+        <div class="space-y-1.5">
+          <h3 class="text-sm font-extrabold text-slate-800 tracking-wide">
+            {{ processingMessage }}
+          </h3>
+          <p class="text-[10px] font-bold text-slate-400 tracking-wider">
+            กรุณารอสักครู่ ระบบกำลังเชื่อมต่อกับเซิร์ฟเวอร์...
+          </p>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal: Add / Edit Bug -->
     <div
@@ -386,8 +474,8 @@
               <input
                 type="text"
                 v-model="formState.bugId"
-                placeholder="ตัวอย่าง ปรับให้ตรงตาม Figma UBI-${code}1"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                readonly
+                class="w-full bg-slate-100/70 border border-slate-200 rounded-2xl px-4 py-3 outline-none transition-all font-bold text-slate-500 cursor-not-allowed select-none"
               />
             </div>
             <div class="space-y-1.5">
