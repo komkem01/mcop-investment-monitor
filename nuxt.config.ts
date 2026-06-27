@@ -9,7 +9,10 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'MCOP INVESTMENT MONITOR'
+      title: 'MCOP INVESTMENT MONITOR',
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+      ]
     }
   },
   runtimeConfig: {
