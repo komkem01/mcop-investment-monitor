@@ -22,3 +22,9 @@ logs
 .env
 .env.*
 !.env.example
+
+# Backend local config and credentials
+backend/.env
+backend/credentials.json
+backend/backend
+
