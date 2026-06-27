@@ -91,68 +91,6 @@
                 </h3>
               </div>
             </div>
-
-            <!-- Pagination Bar -->
-            <div
-              class="flex items-center justify-between mt-4 px-2"
-              v-if="filteredBugs.length > 0"
-            >
-              <div
-                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide"
-              >
-                แสดง {{ (currentPage - 1) * itemsPerPage + 1 }} ถึง
-                {{
-                  Math.min(currentPage * itemsPerPage, filteredBugs.length)
-                }}
-                จากทั้งหมด {{ filteredBugs.length }} รายการ
-              </div>
-              <div class="flex items-center space-x-1">
-                <button
-                  @click="prevPage"
-                  :disabled="currentPage === 1"
-                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-                  :class="
-                    currentPage === 1
-                      ? 'text-slate-300 cursor-not-allowed'
-                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
-                  "
-                >
-                  ก่อนหน้า
-                </button>
-                <div class="flex space-x-1">
-                  <button
-                    v-for="page in visiblePages"
-                    :key="page"
-                    @click="page !== '...' ? goToPage(page) : null"
-                    :disabled="page === '...'"
-                    class="min-w-[32px] h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center px-2"
-                    :class="[
-                      currentPage === page
-                        ? 'bg-indigo-600 text-white shadow-[0_4px_10px_rgba(99,102,241,0.3)]'
-                        : 'text-slate-600 hover:bg-slate-100 active:scale-95',
-                      page === '...'
-                        ? 'cursor-default hover:bg-transparent text-slate-400'
-                        : '',
-                    ]"
-                  >
-                    {{ page }}
-                  </button>
-                </div>
-                <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-                  :class="
-                    currentPage === totalPages
-                      ? 'text-slate-300 cursor-not-allowed'
-                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
-                  "
-                >
-                  ถัดไป
-                </button>
-              </div>
-            </div>
-
           </section>
 
           <!-- Main Bug Tracking Table & Filters -->
@@ -398,6 +336,67 @@
                 </tbody>
               </table>
             </div>
+
+            <!-- Pagination Bar -->
+            <div
+              class="flex items-center justify-between mt-4 px-2"
+              v-if="filteredBugs.length > 0"
+            >
+              <div
+                class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide"
+              >
+                แสดง {{ (currentPage - 1) * itemsPerPage + 1 }} ถึง
+                {{
+                  Math.min(currentPage * itemsPerPage, filteredBugs.length)
+                }}
+                จากทั้งหมด {{ filteredBugs.length }} รายการ
+              </div>
+              <div class="flex items-center space-x-1">
+                <button
+                  @click="prevPage"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === 1
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ก่อนหน้า
+                </button>
+                <div class="flex space-x-1">
+                  <button
+                    v-for="page in visiblePages"
+                    :key="page"
+                    @click="page !== '...' ? goToPage(page) : null"
+                    :disabled="page === '...'"
+                    class="min-w-[32px] h-8 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center px-2"
+                    :class="[
+                      currentPage === page
+                        ? 'bg-indigo-600 text-white shadow-[0_4px_10px_rgba(99,102,241,0.3)]'
+                        : 'text-slate-600 hover:bg-slate-100 active:scale-95',
+                      page === '...'
+                        ? 'cursor-default hover:bg-transparent text-slate-400'
+                        : '',
+                    ]"
+                  >
+                    {{ page }}
+                  </button>
+                </div>
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                  :class="
+                    currentPage === totalPages
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-600 hover:bg-slate-100 active:scale-95'
+                  "
+                >
+                  ถัดไป
+                </button>
+              </div>
+            </div>
           </section>
         </template>
       </div>
@@ -569,8 +568,10 @@
               <input
                 type="text"
                 v-model="formState.fixedDate"
-                placeholder="29/05/2026 15:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.fixedDate && (formState.fixedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
             <div class="space-y-1.5">
@@ -580,8 +581,10 @@
               <input
                 type="text"
                 v-model="formState.passedDate"
-                placeholder="30/05/2026 09:00"
-                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700"
+                placeholder="คลิกเพื่อเลือกเวลาปัจจุบัน"
+                @click="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                @focus="!formState.passedDate && (formState.passedDate = new Date().toLocaleString('th-TH'))"
+                class="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-400 focus:bg-white focus:shadow-[0_4px_16_rgba(99,102,241,0.03)] transition-all font-semibold text-slate-700 cursor-pointer"
               />
             </div>
           </div>
